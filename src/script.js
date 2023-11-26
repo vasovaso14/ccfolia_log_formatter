@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file);
     reader.onload = function (e) {
       const originalLog = e.target.result;
+      const extractedEntries = extractDataFromHTML(originalLog); // extract data
       const formattedLog = formatLog(originalLog);  // format uploaded log
 
       // create a format button 
@@ -64,5 +65,39 @@ function removeAllChildren(parent){
     parent.removeChild(parent.firstChild);
   }
   return;
+}
+
+function extractDataFromHTML(originalHTML) {
+  const entries = [];
+
+  // analyze HTML (-> DOM node)
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(originalHTML, 'text/html');
+
+  // extract data per <p> tag
+  const paragraphElements = doc.querySelectorAll('p');
+  paragraphElements.forEach(paragraph => {
+      const entry = {};
+
+      // extract color
+      const style = paragraph.getAttribute('style');
+      const colorMatch = /color:\s*([^;]+);/.exec(style);
+      if (colorMatch) {
+          entry.color = colorMatch[1];
+      }
+      // extract tab name
+      tabElement = paragraph.children[0].innerText;
+      tabElement = tabElement.replace(' [', '');
+      tabElement = tabElement.replace(']', '');
+      entry.tabName = tabElement;
+      // extract player name
+      entry.playerName = paragraph.children[1].innerText;
+      // extract text
+      entry.content = paragraph.children[2].innerText;
+
+      entries.push(entry);
+  });
+
+  return entries;
 }
 
