@@ -28,8 +28,21 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file);
     reader.onload = function (e) {
       const originalLog = e.target.result;
-      const extractedEntries = extractDataFromHTML(originalLog); // extract data
-      const formattedLog = formatLog(originalLog);  // format uploaded log
+      // analyze HTML (-> DOM node)
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(originalLog, 'text/html');
+
+      const extractedEntries = extractDataFromHTML(doc)[0]; // extract data
+      const playerColorList = extractDataFromHTML(doc)[1];
+      const tabNameSet = extractDataFromHTML(doc)[2];
+      console.log(playerColorList);
+      console.log(tabNameSet);
+      //const formattedLog = formatLog(originalLog);  // format uploaded log
+
+      setCSS(doc, extractedEntries, playerColorList, tabNameSet);
+
+      const serializer = new XMLSerializer();
+      const formattedLog = serializer.serializeToString(doc);
 
       // create a format button 
       const formatButton = document.createElement('button');
@@ -67,12 +80,10 @@ function removeAllChildren(parent){
   return;
 }
 
-function extractDataFromHTML(originalHTML) {
+function extractDataFromHTML(doc) {
   const entries = [];
-
-  // analyze HTML (-> DOM node)
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(originalHTML, 'text/html');
+  const playerColorStringSet = new Set();
+  const tabNameSet = new Set();
 
   // extract data per <p> tag
   const paragraphElements = doc.querySelectorAll('p');
@@ -96,8 +107,102 @@ function extractDataFromHTML(originalHTML) {
       entry.content = paragraph.children[2].innerText;
 
       entries.push(entry);
-  });
 
-  return entries;
+      const playerColorPairString = JSON.stringify({ playerName: entry.playerName, color: entry.color });
+      playerColorStringSet.add(playerColorPairString);
+
+      tabNameSet.add(entry.tabName);
+  });
+  const playerColorList = Array.from(playerColorStringSet).map(JSON.parse);
+
+  return [entries, playerColorList, tabNameSet];
+}
+
+function analyzeExtractedData(extractedEntries){
+
+}
+
+function setCSS(doc, extractedEntries, playerColorList, tabNameSet) {
+
+  const styleElement = doc.createElement('style');
+  // スタイルシートの内容を設定
+  styleElement.textContent = `
+    html {
+      font-size: 14px;
+    }
+    body {
+      -webkit-text-size-adjust: 100%;
+      background-color: #ffffff;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 1rem 1rem 0;
+      color: #000000;
+    }
+    .tab {
+      border: 1px solid #999;
+      margin: 2rem 1rem 1rem;
+      line-height: 1.5;
+      position: relative;
+    }
+    .tabtitle {
+      border: 1px solid transparent;
+      border-color: inherit;
+      background-color: inherit;
+      position: absolute;
+      top: -.8rem;
+      left: 1rem;
+      min-width: 7rem;
+      padding: 0 .5rem;
+      text-align: center;
+      font-size: 1rem;
+      z-index: 9999;
+      line-height: 1.4rem;
+    }
+    .player {
+      margin: 0;
+      padding: 0 .5rem;
+      padding-left: 10.5rem;
+      border-bottom: 1px dotted transparent;
+      border-color: inherit;
+      position: relative;
+    }
+    .player:last-child {
+      border-bottom: 0;
+    }
+    .player b {
+      display: block;
+      height: 100%;
+      width: 9rem;
+      padding: 0 .5rem;
+      border-right: 1px solid transparent;
+      border-color: inherit;
+      position: absolute;
+      top: 0;
+      left: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tabtitle + .player {
+      padding-top: .7rem;
+    }
+    .tabtitle + .player b {
+      padding-top: .7rem;
+      height: calc(100% - .7rem);
+    }
+    .diceroll {
+      padding: 0 .5em;
+      color: #ffffff;
+    }
+  `;
+  // <style>要素を<head>要素に追加
+  doc.head.appendChild(styleElement);
+  
+  // define player settings
+  
+
+  // define tab settings
+
 }
 
