@@ -97,14 +97,14 @@ function extractDataFromHTML(doc) {
           entry.color = colorMatch[1];
       }
       // extract tab name
-      tabElement = paragraph.children[0].innerText;
+      tabElement = paragraph.children[0].innerHTML;
       tabElement = tabElement.replace(' [', '');
       tabElement = tabElement.replace(']', '');
       entry.tabName = tabElement;
       // extract player name
-      entry.playerName = paragraph.children[1].innerText;
+      entry.playerName = paragraph.children[1].innerHTML;
       // extract text
-      entry.content = paragraph.children[2].innerText;
+      entry.content = paragraph.children[2].innerHTML;
 
       entries.push(entry);
 
