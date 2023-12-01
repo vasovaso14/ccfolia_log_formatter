@@ -229,5 +229,29 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
   // <style>要素を<head>要素に追加
   doc.head.appendChild(styleElement);
 
-}
+  // clear body
+  body = doc.querySelector('body');
+  removeAllChildren(body);
 
+  // format
+  extractedEntries.forEach( (entry, index, entries) => {
+    if (index===0 || (index>0 && entry.tabName !== entries[index-1].tabName)){
+    tab = doc.createElement('div');
+    tab.className = `tab t${tabNameList.indexOf(entry.tabName)}`
+    body.appendChild(tab)
+
+    tabTitle = doc.createElement('div');
+    tabTitle.className = 'tabtitle';
+    tabTitle.innerHTML = entry.tabName;
+    tab.appendChild(tabTitle);
+    }
+
+    statement = doc.createElement('p');
+    statement.className = `player p${playerColorList.findIndex((playerColor) => 
+      playerColor.playerName === entry.playerName && playerColor.color === entry.color)}`;
+    statement.innerHTML = `<b>${entry.playerName}</b>${entry.content}`;
+    tab.appendChild(statement);
+    
+  })
+
+}
