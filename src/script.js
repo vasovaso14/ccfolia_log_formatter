@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tabNameList = extractedData[2];
 
       // create a tab setting area
+      createTabSettingErea(tabNameList);
 
       // create a character setting area
 
@@ -52,9 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
         //reader.onloadが非同期処理なので、ちょっとだけ遅延させる
         setTimeout(function () {
           // change statements, characterColorList, tabNameList, etc.
+          const tabColorList = getTabColorList(tabNameList);
 
           // format the log
-          formatLog(logDocument, statements, characterColorList, tabNameList);
+          formatLog(logDocument, statements, characterColorList, tabNameList, tabColorList);
 
           // convert the log to a text file
           const serializer = new XMLSerializer();
@@ -123,10 +125,10 @@ function extractDataFromLog(logDocument) {
   return [statements, characterColorList, tabNameList];
 }
 
-function formatLog(logDocument, statements, characterColorList, tabNameList) {
+function formatLog(logDocument, statements, characterColorList, tabNameList, tabColorList) {
   // add <style> to <head>
   const style = logDocument.createElement('style');
-  const styleContent = setStyleContent(characterColorList, tabNameList);
+  const styleContent = setStyleContent(characterColorList, tabNameList, tabColorList);
   style.innerHTML = styleContent
   logDocument.head.appendChild(style);
 
@@ -157,7 +159,7 @@ function formatLog(logDocument, statements, characterColorList, tabNameList) {
 
 }
 
-function setStyleContent (characterColorList, tabNameList){
+function setStyleContent (characterColorList, tabNameList, tabColorList){
   // set the basic style
   let styleContent = `
     html {
@@ -236,7 +238,7 @@ function setStyleContent (characterColorList, tabNameList){
 
       /* [${tab}] タブ */
       .t${index} {
-        background-color: #cccccc;
+        background-color: ${tabColorList[index]};
         border-color: #999999;
         color: #000000;
         font-size: .8rem;
@@ -257,4 +259,36 @@ function setStyleContent (characterColorList, tabNameList){
   })
 
   return styleContent;
+}
+
+function createTabSettingErea(tabNameList){
+  const tabSettingErea = document.createElement('div');
+  formatErea.appendChild(tabSettingErea);
+  tabNameList.forEach((tabName, index) => {
+    const tabSetting = document.createElement('div');
+    tabSettingErea.appendChild(tabSetting);
+
+    const colorPickerLabel = document.createElement('label');
+    colorPickerLabel.for = `tabColorPicker${index}`;
+    colorPickerLabel.innerHTML = `${tabName}`;
+    tabSetting.appendChild(colorPickerLabel);
+
+    const colorPickerInput = document.createElement('input');
+    colorPickerInput.type = 'color';
+    colorPickerInput.id = `tabColorPicker${index}`;
+    colorPickerInput.value = '#888888';
+    tabSetting.appendChild(colorPickerInput);
+  })
+}
+
+function getTabColorList(tabNameList){
+  const tabColorList = [];
+
+  tabNameList.forEach((tabName, index) => {
+    const colorPicker = document.getElementById(`tabColorPicker${index}`);
+    const tabColor = colorPicker.value;
+    tabColorList.push(tabColor);
+  })
+
+  return tabColorList;
 }
