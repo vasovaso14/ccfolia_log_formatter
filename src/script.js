@@ -30,33 +30,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const originalLog = e.target.result;
       // analyze HTML (-> DOM node)
       const parser = new DOMParser();
-      const doc = parser.parseFromString(originalLog, 'text/html');
+      const logDocument = parser.parseFromString(originalLog, 'text/html');
 
-      const extractedEntries = extractDataFromHTML(doc)[0]; // extract data
-      const playerColorList = extractDataFromHTML(doc)[1];
-      const tabNameList = extractDataFromHTML(doc)[2];
-      console.log(playerColorList);
-      console.log(tabNameList);
-      //const formattedLog = formatLog(originalLog);  // format uploaded log
+      // extract data
+      extractedData = extractDataFromLog(logDocument)
+      const statements = extractedData[0];
+      const characterColorList = extractedData[1];
+      const tabNameList = extractedData[2];
 
-      setCSS(doc, extractedEntries, playerColorList, tabNameList);
+      // create a tab setting area
 
-      const serializer = new XMLSerializer();
-      const formattedLog = serializer.serializeToString(doc);
+      // create a character setting area
 
       // create a format button 
       const formatButton = document.createElement('button');
-      formatButton.textContent = '整形！';
+      formatButton.innerHTML = '整形！';
       formatErea.appendChild(formatButton);
 
       // when format button is clicked
       formatButton.addEventListener('click', function () {
         //reader.onloadが非同期処理なので、ちょっとだけ遅延させる
         setTimeout(function () {
+          // change statements, characterColorList, tabNameList, etc.
+
+          // format the log
+          formatLog(logDocument, statements, characterColorList, tabNameList);
+
+          // convert the log to a text file
+          const serializer = new XMLSerializer();
+          const formattedLog = serializer.serializeToString(logDocument);
+          
           // clear the download erea and create a download button whenever format button is clicked
           removeAllChildren(downloadErea);
           const downloadButton = document.createElement('a');
-          downloadButton.textContent = 'ダウンロード';
+          downloadButton.innerHTML = 'ダウンロード';
           downloadButton.download = 'formatted.html';
           downloadButton.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(formattedLog);
           downloadErea.appendChild(downloadButton);
@@ -66,12 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 })
 
-// format log func
-function formatLog(originalLog){
-  const formattedLog = originalLog;
-  return formattedLog;
-}
-
 // remove all childern from a parent element
 function removeAllChildren(parent){
   while (parent.firstChild) {
@@ -80,54 +81,85 @@ function removeAllChildren(parent){
   return;
 }
 
-function extractDataFromHTML(doc) {
-  const entries = [];
-  const playerColorStringSet = new Set();
+// extract statements, characterColorList, and tabNameList from uploaded log
+function extractDataFromLog(logDocument) {
+  const statements = [];
+  const characterColorStringSet = new Set();
   const tabNameSet = new Set();
 
   // extract data per <p> tag
-  const paragraphElements = doc.querySelectorAll('p');
+  const paragraphElements = logDocument.querySelectorAll('p');
   paragraphElements.forEach( (paragraph) => {
-      const entry = {};
+    const statement = {};
 
-      // extract color
-      const style = paragraph.getAttribute('style');
-      const colorMatch = /color:\s*([^;]+);/.exec(style);
-      if (colorMatch) {
-          entry.color = colorMatch[1];
-      }
-      // extract tab name
-      tabElement = paragraph.children[0].innerHTML;
-      tabElement = tabElement.replace(' [', '');
-      tabElement = tabElement.replace(']', '');
-      entry.tabName = tabElement;
-      // extract player name
-      entry.playerName = paragraph.children[1].innerHTML;
-      // extract text
-      entry.content = paragraph.children[2].innerHTML;
+    // extract color
+    const style = paragraph.getAttribute('style');
+    const colorMatch = /color:\s*([^;]+);/.exec(style);
+    if (colorMatch) {
+        statement.color = colorMatch[1];
+    }
+    // extract tab name
+    let tabName = paragraph.children[0].innerHTML;
+    tabName = tabName.replace(' [', '');
+    tabName = tabName.replace(']', '');
+    statement.tabName = tabName;
+    // extract character name
+    statement.characterName = paragraph.children[1].innerHTML;
+    // extract text
+    statement.content = paragraph.children[2].innerHTML;
 
-      entries.push(entry);
+    statements.push(statement);
 
-      const playerColorPairString = JSON.stringify({ playerName: entry.playerName, color: entry.color });
-      playerColorStringSet.add(playerColorPairString);
+    // get a combination of character and color (as text temporary)
+    const characterColorPairString = JSON.stringify({ characterName: statement.characterName, color: statement.color });
+    characterColorStringSet.add(characterColorPairString);
 
-      tabNameSet.add(entry.tabName);
+    tabNameSet.add(statement.tabName);
   });
-  const playerColorList = Array.from(playerColorStringSet).map(JSON.parse);
+
+  const characterColorList = Array.from(characterColorStringSet).map(JSON.parse); // text -> dictionary
   const tabNameList = Array.from(tabNameSet)
 
-  return [entries, playerColorList, tabNameList];
+  return [statements, characterColorList, tabNameList];
 }
 
-function analyzeExtractedData(extractedEntries){
+function formatLog(logDocument, statements, characterColorList, tabNameList) {
+  // add <style> to <head>
+  const style = logDocument.createElement('style');
+  const styleContent = setStyleContent(characterColorList, tabNameList);
+  style.innerHTML = styleContent
+  logDocument.head.appendChild(style);
+
+  // clear body
+  removeAllChildren(logDocument.body);
+
+  // relocate statements
+  statements.forEach( (statement, index, statements) => {
+    // output statements in the same tab together
+    if (index===0 || (index>0 && statement.tabName !== statements[index-1].tabName)){
+      tab = logDocument.createElement('div');
+      tab.className = `tab t${tabNameList.indexOf(statement.tabName)}`
+      logDocument.body.appendChild(tab)
+
+      tabTitle = logDocument.createElement('div');
+      tabTitle.className = 'tabtitle';
+      tabTitle.innerHTML = statement.tabName;
+      tab.appendChild(tabTitle);
+    }
+
+    formattedStatement = logDocument.createElement('p');
+    formattedStatement.className = `character c${characterColorList.findIndex((characterColor) => 
+      characterColor.characterName === statement.characterName && characterColor.color === statement.color)}`;
+    formattedStatement.innerHTML = `<b>${statement.characterName}</b>${statement.content}`;
+    tab.appendChild(formattedStatement);
+    
+  })
 
 }
 
-function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
-
-  const styleElement = doc.createElement('style');
-  // スタイルシートの内容を設定
-  styleElement.textContent = `
+function setStyleContent (characterColorList, tabNameList){
+  // set the basic style
+  let styleContent = `
     html {
       font-size: 14px;
     }
@@ -160,7 +192,7 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
       z-index: 9999;
       line-height: 1.4rem;
     }
-    .player {
+    .character {
       margin: 0;
       padding: 0 .5rem;
       padding-left: 10.5rem;
@@ -168,10 +200,10 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
       border-color: inherit;
       position: relative;
     }
-    .player:last-child {
+    .character:last-child {
       border-bottom: 0;
     }
-    .player b {
+    .character b {
       display: block;
       height: 100%;
       width: 9rem;
@@ -185,10 +217,10 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .tabtitle + .player {
+    .tabtitle + .character {
       padding-top: .7rem;
     }
-    .tabtitle + .player b {
+    .tabtitle + .character b {
       padding-top: .7rem;
       height: calc(100% - .7rem);
     }
@@ -198,21 +230,9 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
     }
   `;
   
-  // define player settings
-  playerColorList.forEach ( (player, index) => {
-    playerSettings = `
-
-      /* 発言者：${player.playerName} */
-      .p${index} { color: ${player.color}; }
-      .p${index} .diceroll { background-color: ${player.color}; }
-    `
-    styleElement.textContent += playerSettings;
-
-  })
-  
-  // define tab settings
+  // set tab style
   tabNameList.forEach ( (tab, index) => {
-    tabSettings = `
+    tabStyle = `
 
       /* [${tab}] タブ */
       .t${index} {
@@ -222,36 +242,19 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
         font-size: .8rem;
       }
     `
-    styleElement.textContent += tabSettings;
-  })
-  console.log(styleElement.textContent)
-
-  // <style>要素を<head>要素に追加
-  doc.head.appendChild(styleElement);
-
-  // clear body
-  body = doc.querySelector('body');
-  removeAllChildren(body);
-
-  // format
-  extractedEntries.forEach( (entry, index, entries) => {
-    if (index===0 || (index>0 && entry.tabName !== entries[index-1].tabName)){
-    tab = doc.createElement('div');
-    tab.className = `tab t${tabNameList.indexOf(entry.tabName)}`
-    body.appendChild(tab)
-
-    tabTitle = doc.createElement('div');
-    tabTitle.className = 'tabtitle';
-    tabTitle.innerHTML = entry.tabName;
-    tab.appendChild(tabTitle);
-    }
-
-    statement = doc.createElement('p');
-    statement.className = `player p${playerColorList.findIndex((playerColor) => 
-      playerColor.playerName === entry.playerName && playerColor.color === entry.color)}`;
-    statement.innerHTML = `<b>${entry.playerName}</b>${entry.content}`;
-    tab.appendChild(statement);
-    
+    styleContent += tabStyle;
   })
 
+  // set character style
+  characterColorList.forEach ( (character, index) => {
+    characterStyle = `
+
+      /* 発言者：${character.characterName} */
+      .c${index} { color: ${character.color}; }
+      .c${index} .diceroll { background-color: ${character.color}; }
+    `
+    styleContent += characterStyle;
+  })
+
+  return styleContent;
 }
