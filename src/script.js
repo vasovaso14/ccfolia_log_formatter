@@ -34,12 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const extractedEntries = extractDataFromHTML(doc)[0]; // extract data
       const playerColorList = extractDataFromHTML(doc)[1];
-      const tabNameSet = extractDataFromHTML(doc)[2];
+      const tabNameList = extractDataFromHTML(doc)[2];
       console.log(playerColorList);
-      console.log(tabNameSet);
+      console.log(tabNameList);
       //const formattedLog = formatLog(originalLog);  // format uploaded log
 
-      setCSS(doc, extractedEntries, playerColorList, tabNameSet);
+      setCSS(doc, extractedEntries, playerColorList, tabNameList);
 
       const serializer = new XMLSerializer();
       const formattedLog = serializer.serializeToString(doc);
@@ -87,7 +87,7 @@ function extractDataFromHTML(doc) {
 
   // extract data per <p> tag
   const paragraphElements = doc.querySelectorAll('p');
-  paragraphElements.forEach(paragraph => {
+  paragraphElements.forEach( (paragraph) => {
       const entry = {};
 
       // extract color
@@ -114,15 +114,16 @@ function extractDataFromHTML(doc) {
       tabNameSet.add(entry.tabName);
   });
   const playerColorList = Array.from(playerColorStringSet).map(JSON.parse);
+  const tabNameList = Array.from(tabNameSet)
 
-  return [entries, playerColorList, tabNameSet];
+  return [entries, playerColorList, tabNameList];
 }
 
 function analyzeExtractedData(extractedEntries){
 
 }
 
-function setCSS(doc, extractedEntries, playerColorList, tabNameSet) {
+function setCSS(doc, extractedEntries, playerColorList, tabNameList) {
 
   const styleElement = doc.createElement('style');
   // スタイルシートの内容を設定
@@ -196,13 +197,37 @@ function setCSS(doc, extractedEntries, playerColorList, tabNameSet) {
       color: #ffffff;
     }
   `;
-  // <style>要素を<head>要素に追加
-  doc.head.appendChild(styleElement);
   
   // define player settings
-  
+  playerColorList.forEach ( (player, index) => {
+    playerSettings = `
 
+      /* 発言者：${player.playerName} */
+      .p${index} { color: ${player.color}; }
+      .p${index} .diceroll { background-color: ${player.color}; }
+    `
+    styleElement.textContent += playerSettings;
+
+  })
+  
   // define tab settings
+  tabNameList.forEach ( (tab, index) => {
+    tabSettings = `
+
+      /* [${tab}] タブ */
+      .t${index} {
+        background-color: #cccccc;
+        border-color: #999999;
+        color: #000000;
+        font-size: .8rem;
+      }
+    `
+    styleElement.textContent += tabSettings;
+  })
+  console.log(styleElement.textContent)
+
+  // <style>要素を<head>要素に追加
+  doc.head.appendChild(styleElement);
 
 }
 
