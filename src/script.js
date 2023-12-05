@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         //reader.onloadが非同期処理なので、ちょっとだけ遅延させる
         setTimeout(function () {
           // change statements, characterColorList, tabNameList, etc.
+          changeTabName(statements, tabNameList);
           const tabColorList = getTabColorList(tabNameList);
 
           // format the log
@@ -278,6 +279,12 @@ function createTabSettingErea(tabNameList){
     colorPickerInput.id = `tabColorPicker${index}`;
     colorPickerInput.value = '#888888';
     tabSetting.appendChild(colorPickerInput);
+
+    const textInput = document.createElement('input');
+    textInput.type = 'text';
+    textInput.id = `changedTabName${index}`;
+    textInput.placeholder = '変更';
+    tabSetting.appendChild(textInput);
   })
 }
 
@@ -291,4 +298,21 @@ function getTabColorList(tabNameList){
   })
 
   return tabColorList;
+}
+
+function changeTabName(statements, tabNameList){
+  for (let i=0; i<tabNameList.length; i++){
+    const changedTabInput = document.getElementById(`changedTabName${i}`);
+    const changedTabName = changedTabInput.value;
+
+    if (changedTabName !== ""){
+      statements.forEach((statement, index) => {
+        if (statement.tabName === tabNameList[i]) {
+            statement.tabName = changedTabName;
+        }
+      });
+      tabNameList[i] = changedTabName;
+    }
+  }
+  console.log(tabNameList);
 }
