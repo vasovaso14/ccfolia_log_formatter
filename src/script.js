@@ -53,11 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
         //reader.onloadが非同期処理なので、ちょっとだけ遅延させる
         setTimeout(function () {
           // change statements, characterColorList, tabNameList, etc.
-          changeTabName(statements, tabNameList);
-          const tabColorList = getTabColorList(tabNameList);
+          const deleted = deleteTab(statements, tabNameList);
+          const deletedStatements = deleted[0];
+          const deletedTabNameList = deleted[1];
+          changeTabName(deletedStatements, deletedTabNameList);
+          const tabColorList = getTabColorList(deletedTabNameList);
 
           // format the log
-          formatLog(logDocument, statements, characterColorList, tabNameList, tabColorList);
+          formatLog(logDocument, deletedStatements, characterColorList, deletedTabNameList, tabColorList);
 
           // convert the log to a text file
           const serializer = new XMLSerializer();
@@ -269,6 +272,13 @@ function createTabSettingErea(tabNameList){
     const tabSetting = document.createElement('div');
     tabSettingErea.appendChild(tabSetting);
 
+    const checkTab = document.createElement('input');
+    checkTab.type = 'checkbox';
+    checkTab.id = `checkTab${index}`;
+    checkTab.value = 'isChecked';
+    checkTab.checked = 'true';
+    tabSettingErea.appendChild(checkTab);
+
     const colorPickerLabel = document.createElement('label');
     colorPickerLabel.for = `tabColorPicker${index}`;
     colorPickerLabel.innerHTML = `${tabName}`;
@@ -300,6 +310,27 @@ function getTabColorList(tabNameList){
   return tabColorList;
 }
 
+function deleteTab(statements, tabNameList){
+  let deletedStatements = statements
+  let deletedTabNameList = tabNameList
+  for (let i=0; i<tabNameList.length; i++){
+    const checkTabInput = document.getElementById(`checkTab${i}`);
+    console.log(checkTabInput.checked)
+    if (checkTabInput.checked === false){
+      console.log('in');
+      deletedStatements = deletedStatements.filter((statement) => {
+        return statement.tabName !== tabNameList[i];
+      });
+      deletedTabNameList = deletedTabNameList.filter((tabName) => {
+        return tabName !== tabNameList[i];
+      });
+    }
+  }
+  console.log(deletedTabNameList);
+  console.log(deletedStatements);
+  return [deletedStatements, deletedTabNameList];
+}
+
 function changeTabName(statements, tabNameList){
   for (let i=0; i<tabNameList.length; i++){
     const changedTabInput = document.getElementById(`changedTabName${i}`);
@@ -314,5 +345,4 @@ function changeTabName(statements, tabNameList){
       tabNameList[i] = changedTabName;
     }
   }
-  console.log(tabNameList);
 }
