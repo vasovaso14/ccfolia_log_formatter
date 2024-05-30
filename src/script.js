@@ -379,7 +379,7 @@ function createCharacterSettingArea(characterColorList){
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-  const headerCells = ['キャラクター', 'キャラクター名変更', 'キャラクターカラー'];
+  const headerCells = ['キャラクター', '色'];
   headerCells.forEach(headerText => {
     const th = document.createElement('th');
     th.textContent = headerText;
@@ -418,16 +418,6 @@ function createCharacterSettingArea(characterColorList){
     characterColorPickerCell.style.border = '1px solid #000';
     characterColorPickerCell.style.padding = '8px';
     row.appendChild(characterColorPickerCell);
-
-    const characterNameInputCell = document.createElement('td');
-    const characterNameInput = document.createElement('input');
-    characterNameInput.type = 'text';
-    characterNameInput.id = `changedCharacterName${index}`;
-    characterNameInput.placeholder = 'キャラクター名を変更';
-    characterNameInputCell.appendChild(characterNameInput);
-    characterNameInputCell.style.border = '1px solid #000';
-    characterNameInputCell.style.padding = '8px';
-    row.appendChild(characterNameInputCell);
 
     tbody.appendChild(row);
   })
