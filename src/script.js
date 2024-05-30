@@ -244,6 +244,14 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
     const checkReduceFontSize = document.getElementById(`reduceFontSize${index}`).checked;
     const fontSize = checkReduceFontSize ? '0.6rem' : '0.8rem';
     const tabTitleFontSize = checkReduceFontSize ? '0.7rem' : '1rem';
+    const tabMarginLeft = document.getElementById(`tabMarginLeft${index}`).value;
+    const tabWidth = document.getElementById(`tabWidth${index}`).value;
+    // if (!tabMarginLeft){
+    //   tabMarginLeft = '0';
+    // }
+    // if (!tabWidth){
+    //   tabWidth = '100';
+    // }
 
     tabStyle = `
 
@@ -253,6 +261,8 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
         border-color: #999999;
         color: #000000;
         font-size: ${fontSize};
+        margin-left: ${tabMarginLeft}%;
+        width: ${tabWidth}%;
       }
       .t${index} .tabtitle {
         font-size: ${tabTitleFontSize};
@@ -289,7 +299,7 @@ function createTabSettingArea(tabNameList){
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-  const headerCells = ['表示タブ', 'タブ名', 'タブ色', 'タブ名変更', '文字を小さくする'];
+  const headerCells = ['表示タブ', 'タブ名', 'タブ色', 'タブ名変更', '文字を小さくする', '左余白', '幅'];
   headerCells.forEach(headerText => {
     const th = document.createElement('th');
     th.textContent = headerText;
@@ -313,7 +323,7 @@ function createTabSettingArea(tabNameList){
     const checkTab = document.createElement('input');
     checkTab.type = 'checkbox';
     checkTab.id = `checkTab${index}`;
-    checkTab.value = 'isChecked';
+    checkTab.value = 'isChecked'; // ?
     checkTab.checked = true;
     checkTabCell.appendChild(checkTab);
     checkTabCell.style.border = '1px solid #000';
@@ -354,13 +364,40 @@ function createTabSettingArea(tabNameList){
     const reduceFontSize = document.createElement('input');
     reduceFontSize.type = 'checkbox';
     reduceFontSize.id = `reduceFontSize${index}`;
-    reduceFontSize.value = 'isChecked';
+    reduceFontSize.value = 'isChecked'; // ?
     reduceFontSize.checked = false;
     reduceFontSizeCell.appendChild(reduceFontSize);
     reduceFontSizeCell.style.border = '1px solid #000';
     reduceFontSizeCell.style.padding = '8px';
     row.appendChild(reduceFontSizeCell);
 
+    const tabMarginLeftCell = document.createElement('td');
+    const tabMarginLeft = document.createElement('input');
+    tabMarginLeft.type = 'number';
+    tabMarginLeft.id = `tabMarginLeft${index}`;
+    tabMarginLeft.min = '0';
+    tabMarginLeft.max = '80';
+    tabMarginLeft.placeholder = '0'
+    tabMarginLeft.step = '1';
+    tabMarginLeft.oninput = 'updatePercentValue(this.value)'
+    tabMarginLeftCell.appendChild(tabMarginLeft);
+    tabMarginLeftCell.style.border = '1px solid #000';
+    tabMarginLeftCell.style.padding = '8px';
+    row.appendChild(tabMarginLeftCell);
+
+    const tabWidthCell = document.createElement('td');
+    const tabWidth = document.createElement('input');
+    tabWidth.type = 'number';
+    tabWidth.id = `tabWidth${index}`;
+    tabWidth.min = '20';
+    tabWidth.max = '100';
+    tabWidth.placeholder = '100';
+    tabWidth.step = '1';
+    tabWidthCell.appendChild(tabWidth);
+    tabWidthCell.style.border = '1px solid #000';
+    tabWidthCell.style.padding = '8px';
+    row.appendChild(tabWidthCell);
+    
     tbody.appendChild(row);
   })
 }
