@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
       createTabSettingArea(tabNameList);
 
       // create a character setting area
+      createCharacterSettingArea(characterColorList)
 
       // create a format button 
       const formatButton = document.createElement('button');
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const deleted = deleteTab(statements, tabNameList);
           const deletedStatements = deleted[0];
           const deletedTabNameList = deleted[1];
+          changeCharacterColor(deletedStatements, characterColorList);
           changeTabName(deletedStatements, deletedTabNameList);
           const tabColorList = getTabColorList(deletedTabNameList);
 
@@ -304,13 +306,6 @@ function createTabSettingArea(tabNameList){
   table.appendChild(tbody);
 
   tabNameList.forEach((tabName, index) => {
-    //const tabSetting = document.createElement('div');
-    // tabSetting.style.display = 'flex'; // 横並びにするためのスタイル
-    // tabSetting.style.alignItems = 'center'; // 中央揃えにするためのスタイル
-    // tabSetting.style.marginBottom = '10px'; // 各行の間にスペースを追加
-    //tabSettingArea.appendChild(tabSetting);
-
-
     const row = document.createElement('tr');
     row.style.border = '1px solid #000';
 
@@ -370,6 +365,64 @@ function createTabSettingArea(tabNameList){
   })
 }
 
+function createCharacterSettingArea(characterColorList){
+  const characterSettingArea = document.createElement('div');
+  formatArea.appendChild(characterSettingArea);
+
+  // テーブルを作成
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+  characterSettingArea.appendChild(table);
+
+  // テーブルヘッダー行を作成
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+
+  const headerCells = ['キャラクター', '色'];
+  headerCells.forEach(headerText => {
+    const th = document.createElement('th');
+    th.textContent = headerText;
+    th.style.border = '1px solid #000';
+    th.style.padding = '8px';
+    headerRow.appendChild(th);
+  });
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // テーブルボディを作成
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+
+  characterColorList.forEach((characterColor, index) => {
+    const row = document.createElement('tr');
+    row.style.border = '1px solid #000';
+
+    const characterNameCell = document.createElement('td');
+    const characterNameLabel = document.createElement('label');
+    characterNameLabel.innerHTML = `${characterColor.characterName}`;
+    characterNameCell.appendChild(characterNameLabel);
+    characterNameCell.style.border = '1px solid #000';
+    characterNameCell.style.padding = '8px';
+    row.appendChild(characterNameCell);
+
+    const characterColorPickerCell = document.createElement('td');
+    const characterColorPickerInput = document.createElement('input');
+    characterColorPickerInput.type = 'color';
+    characterColorPickerInput.id = `characterColorPicker${index}`;
+    characterColorPickerInput.value = `${characterColor.color}`;
+    characterColorPickerInput.style.width = '30px'; // 正方形にするための幅
+    characterColorPickerInput.style.height = '30px'; // 正方形にするための高さ
+    characterColorPickerCell.appendChild(characterColorPickerInput);
+    characterColorPickerCell.style.border = '1px solid #000';
+    characterColorPickerCell.style.padding = '8px';
+    row.appendChild(characterColorPickerCell);
+
+    tbody.appendChild(row);
+  })
+}
+
 function getTabColorList(tabNameList){
   const tabColorList = [];
 
@@ -405,8 +458,7 @@ function deleteTab(statements, tabNameList){
 
 function changeTabName(statements, tabNameList){
   for (let i=0; i<tabNameList.length; i++){
-    const changedTabInput = document.getElementById(`changedTabName${i}`);
-    const changedTabName = changedTabInput.value;
+    const changedTabName = document.getElementById(`changedTabName${i}`).value;
 
     if (changedTabName !== ""){
       statements.forEach((statement, index) => {
@@ -418,3 +470,18 @@ function changeTabName(statements, tabNameList){
     }
   }
 }
+
+function changeCharacterColor(statements, characterColorList){
+  for (let i=0; i<characterColorList.length; i++){
+    const changedCharacterColor = document.getElementById(`characterColorPicker${i}`).value;
+
+    statements.forEach((statement, index) => {
+      if (statement.characterName === characterColorList[i].characterName && statement.color === characterColorList[i].color) {
+          statement.color = changedCharacterColor;
+      }
+    });
+    characterColorList[i].color = changedCharacterColor;
+    }
+}
+
+
