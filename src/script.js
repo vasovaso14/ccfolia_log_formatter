@@ -1,16 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
   // define constants
-  const formatErea = document.getElementById('formatErea');
-  const downloadErea = document.getElementById('downloadErea');
+  const formatArea = document.getElementById('formatArea');
+  const downloadArea = document.getElementById('downloadArea');
 
   // main process
   uploadButton.addEventListener('change', function () {
     const uploadFile = document.getElementById('uploadButton');
     const file = uploadFile.files[0];    
     
-    // clear the format and download erea whenever upload button's input is changed
-    removeAllChildren(formatErea);
-    removeAllChildren(downloadErea);
+    // clear the format and download Area whenever upload button's input is changed
+    removeAllChildren(formatArea);
+    removeAllChildren(downloadArea);
 
     // when no file is uploaded
     if (!file){
@@ -34,19 +34,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // extract data
       extractedData = extractDataFromLog(logDocument)
+      // console.log(extractedData)
       const statements = extractedData[0];
       const characterColorList = extractedData[1];
       const tabNameList = extractedData[2];
 
       // create a tab setting area
-      createTabSettingErea(tabNameList);
+      createTabSettingArea(tabNameList);
 
       // create a character setting area
 
       // create a format button 
       const formatButton = document.createElement('button');
       formatButton.innerHTML = '整形！';
-      formatErea.appendChild(formatButton);
+      formatArea.appendChild(formatButton);
 
       // when format button is clicked
       formatButton.addEventListener('click', function () {
@@ -66,13 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const serializer = new XMLSerializer();
           const formattedLog = serializer.serializeToString(logDocument);
           
-          // clear the download erea and create a download button whenever format button is clicked
-          removeAllChildren(downloadErea);
+          // clear the download Area and create a download button whenever format button is clicked
+          removeAllChildren(downloadArea);
           const downloadButton = document.createElement('a');
           downloadButton.innerHTML = 'ダウンロード';
           downloadButton.download = 'formatted.html';
           downloadButton.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(formattedLog);
-          downloadErea.appendChild(downloadButton);
+          downloadArea.appendChild(downloadButton);
         }, 1000);
       })
     }
@@ -235,9 +236,13 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
       color: #ffffff;
     }
   `;
-  
+
   // set tab style
   tabNameList.forEach ( (tab, index) => {
+    const checkReduceFontSize = document.getElementById(`reduceFontSize${index}`).checked;
+    const fontSize = checkReduceFontSize ? '0.6rem' : '0.8rem';
+    const tabTitleFontSize = checkReduceFontSize ? '0.7rem' : '1rem';
+
     tabStyle = `
 
       /* [${tab}] タブ */
@@ -245,7 +250,10 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
         background-color: ${tabColorList[index]};
         border-color: #999999;
         color: #000000;
-        font-size: .8rem;
+        font-size: ${fontSize};
+      }
+      .t${index} .tabtitle {
+        font-size: ${tabTitleFontSize};
       }
     `
     styleContent += tabStyle;
@@ -265,19 +273,20 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
   return styleContent;
 }
 
-function createTabSettingErea(tabNameList){
-  const tabSettingErea = document.createElement('div');
-  formatErea.appendChild(tabSettingErea);
+function createTabSettingArea(tabNameList){
+  const tabSettingArea = document.createElement('div');
+  formatArea.appendChild(tabSettingArea);
   tabNameList.forEach((tabName, index) => {
     const tabSetting = document.createElement('div');
-    tabSettingErea.appendChild(tabSetting);
+    // tabSetting.className = `tabSetting${index}`;
+    tabSettingArea.appendChild(tabSetting);
 
     const checkTab = document.createElement('input');
     checkTab.type = 'checkbox';
     checkTab.id = `checkTab${index}`;
     checkTab.value = 'isChecked';
-    checkTab.checked = 'true';
-    tabSettingErea.appendChild(checkTab);
+    checkTab.checked = true;
+    tabSettingArea.appendChild(checkTab);
 
     const colorPickerLabel = document.createElement('label');
     colorPickerLabel.for = `tabColorPicker${index}`;
@@ -295,6 +304,13 @@ function createTabSettingErea(tabNameList){
     textInput.id = `changedTabName${index}`;
     textInput.placeholder = '変更';
     tabSetting.appendChild(textInput);
+
+    const reduceFontSize = document.createElement('input');
+    reduceFontSize.type = 'checkbox';
+    reduceFontSize.id = `reduceFontSize${index}`;
+    reduceFontSize.value = 'isChecked';
+    reduceFontSize.checked = false;
+    tabSetting.appendChild(reduceFontSize);
   })
 }
 
