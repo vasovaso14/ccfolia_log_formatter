@@ -276,41 +276,97 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
 function createTabSettingArea(tabNameList){
   const tabSettingArea = document.createElement('div');
   formatArea.appendChild(tabSettingArea);
-  tabNameList.forEach((tabName, index) => {
-    const tabSetting = document.createElement('div');
-    // tabSetting.className = `tabSetting${index}`;
-    tabSettingArea.appendChild(tabSetting);
 
+  // テーブルを作成
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+  tabSettingArea.appendChild(table);
+
+  // テーブルヘッダー行を作成
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+
+  const headerCells = ['表示タブ', 'タブ名', 'タブ色', 'タブ名変更', '文字を小さくする'];
+  headerCells.forEach(headerText => {
+    const th = document.createElement('th');
+    th.textContent = headerText;
+    th.style.border = '1px solid #000';
+    th.style.padding = '8px';
+    headerRow.appendChild(th);
+  });
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // テーブルボディを作成
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+
+  tabNameList.forEach((tabName, index) => {
+    //const tabSetting = document.createElement('div');
+    // tabSetting.style.display = 'flex'; // 横並びにするためのスタイル
+    // tabSetting.style.alignItems = 'center'; // 中央揃えにするためのスタイル
+    // tabSetting.style.marginBottom = '10px'; // 各行の間にスペースを追加
+    //tabSettingArea.appendChild(tabSetting);
+
+
+    const row = document.createElement('tr');
+    row.style.border = '1px solid #000';
+
+    const checkTabCell = document.createElement('td');
     const checkTab = document.createElement('input');
     checkTab.type = 'checkbox';
     checkTab.id = `checkTab${index}`;
     checkTab.value = 'isChecked';
     checkTab.checked = true;
-    tabSettingArea.appendChild(checkTab);
+    checkTabCell.appendChild(checkTab);
+    checkTabCell.style.border = '1px solid #000';
+    checkTabCell.style.padding = '8px';
+    row.appendChild(checkTabCell);
 
-    const colorPickerLabel = document.createElement('label');
-    colorPickerLabel.for = `tabColorPicker${index}`;
-    colorPickerLabel.innerHTML = `${tabName}`;
-    tabSetting.appendChild(colorPickerLabel);
+    const tabNameCell = document.createElement('td');
+    const tabNameLabel = document.createElement('label');
+    tabNameLabel.innerHTML = `${tabName}`;
+    tabNameCell.appendChild(tabNameLabel);
+    tabNameCell.style.border = '1px solid #000';
+    tabNameCell.style.padding = '8px';
+    row.appendChild(tabNameCell);
 
+    const colorPickerCell = document.createElement('td');
     const colorPickerInput = document.createElement('input');
     colorPickerInput.type = 'color';
     colorPickerInput.id = `tabColorPicker${index}`;
-    colorPickerInput.value = '#888888';
-    tabSetting.appendChild(colorPickerInput);
+    colorPickerInput.value = '#FFFFFF';
+    colorPickerInput.style.width = '30px'; // 正方形にするための幅
+    colorPickerInput.style.height = '30px'; // 正方形にするための高さ
+    colorPickerCell.appendChild(colorPickerInput);
+    colorPickerCell.style.border = '1px solid #000';
+    colorPickerCell.style.padding = '8px';
+    row.appendChild(colorPickerCell);
 
-    const textInput = document.createElement('input');
-    textInput.type = 'text';
-    textInput.id = `changedTabName${index}`;
-    textInput.placeholder = '変更';
-    tabSetting.appendChild(textInput);
+    const tabNameInputCell = document.createElement('td');
+    const tabNameInput = document.createElement('input');
+    tabNameInput.type = 'text';
+    tabNameInput.id = `changedTabName${index}`;
+    tabNameInput.placeholder = 'タブ名を変更';
+    tabNameInputCell.appendChild(tabNameInput);
+    tabNameInputCell.style.border = '1px solid #000';
+    tabNameInputCell.style.padding = '8px';
+    row.appendChild(tabNameInputCell);
 
+    const reduceFontSizeCell = document.createElement('td');
     const reduceFontSize = document.createElement('input');
     reduceFontSize.type = 'checkbox';
     reduceFontSize.id = `reduceFontSize${index}`;
     reduceFontSize.value = 'isChecked';
     reduceFontSize.checked = false;
-    tabSetting.appendChild(reduceFontSize);
+    reduceFontSizeCell.appendChild(reduceFontSize);
+    reduceFontSizeCell.style.border = '1px solid #000';
+    reduceFontSizeCell.style.padding = '8px';
+    row.appendChild(reduceFontSizeCell);
+
+    tbody.appendChild(row);
   })
 }
 
