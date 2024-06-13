@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // extract data
       extractedData = extractDataFromLog(logDocument)
-      // console.log(extractedData)
       const statements = extractedData[0];
       const characterColorList = extractedData[1];
       const tabNameList = extractedData[2];
@@ -55,15 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
         //reader.onloadが非同期処理なので、ちょっとだけ遅延させる
         setTimeout(function () {
           // change statements, characterColorList, tabNameList, etc.
-          const deleted = deleteTab(statements, tabNameList);
-          const deletedStatements = deleted[0];
-          const deletedTabNameList = deleted[1];
+          const deletedTabSettingList = deleteTab(statements, tabNameList);
+          const deletedStatements = statements;
+          // const deletedStatements = deleted[0];
+          // const deletedTabSettingList = deleted[1];
           changeCharacterColor(deletedStatements, characterColorList);
-          changeTabName(deletedStatements, deletedTabNameList);
-          const tabColorList = getTabColorList(deletedTabNameList);
 
           // format the log
-          formatLog(logDocument, deletedStatements, characterColorList, deletedTabNameList, tabColorList);
+          formatLog(logDocument, deletedStatements, characterColorList, deletedTabSettingList);
 
           // convert the log to a text file
           const serializer = new XMLSerializer();
@@ -94,7 +92,7 @@ function removeAllChildren(parent){
 function extractDataFromLog(logDocument) {
   const statements = [];
   const characterColorStringSet = new Set();
-  const tabNameSet = new Set();
+  const tabNameList = [];
 
   // extract data per <p> tag
   const paragraphElements = logDocument.querySelectorAll('p');
@@ -111,6 +109,10 @@ function extractDataFromLog(logDocument) {
     let tabName = paragraph.children[0].innerHTML;
     tabName = tabName.replace(' [', '');
     tabName = tabName.replace(']', '');
+    if ( !tabNameList.includes(tabName) ){
+      tabNameList.push(tabName);
+    }
+    statement.tabIndex = tabNameList.indexOf(tabName);
     statement.tabName = tabName;
     // extract character name
     statement.characterName = paragraph.children[1].innerHTML;
@@ -123,50 +125,53 @@ function extractDataFromLog(logDocument) {
     const characterColorPairString = JSON.stringify({ characterName: statement.characterName, color: statement.color });
     characterColorStringSet.add(characterColorPairString);
 
-    tabNameSet.add(statement.tabName);
   });
 
   const characterColorList = Array.from(characterColorStringSet).map(JSON.parse); // text -> dictionary
-  const tabNameList = Array.from(tabNameSet)
 
   return [statements, characterColorList, tabNameList];
 }
 
-function formatLog(logDocument, statements, characterColorList, tabNameList, tabColorList) {
+function formatLog(logDocument, statements, characterColorList, tabSettingList) {
   // add <style> to <head>
   const style = logDocument.createElement('style');
-  const styleContent = setStyleContent(characterColorList, tabNameList, tabColorList);
+  const styleContent = setStyleContent(characterColorList, tabSettingList);
   style.innerHTML = styleContent
   logDocument.head.appendChild(style);
 
   // clear body
   removeAllChildren(logDocument.body);
 
+  let lastStatemet = statements[0];
+
   // relocate statements
   statements.forEach( (statement, index, statements) => {
     // output statements in the same tab together
-    if (index===0 || (index>0 && statement.tabName !== statements[index-1].tabName)){
-      tab = logDocument.createElement('div');
-      tab.className = `tab t${tabNameList.indexOf(statement.tabName)}`
-      logDocument.body.appendChild(tab)
+    if ( tabSettingList[statement.tabIndex].show ){
+      if (index===0 || (index>0 && statement.tabIndex !== lastStatemet.tabIndex)){
+        tab = logDocument.createElement('div');
+        tab.className = `tab t${statement.tabIndex}`
+        logDocument.body.appendChild(tab)
+  
+        tabTitle = logDocument.createElement('div');
+        tabTitle.className = 'tabtitle';
+        tabTitle.innerHTML = tabSettingList[statement.tabIndex].tabName;
+        tab.appendChild(tabTitle);
+      }
+  
+      formattedStatement = logDocument.createElement('p');
+      formattedStatement.className = `character c${characterColorList.findIndex((characterColor) => 
+        characterColor.characterName === statement.characterName && characterColor.color === statement.color)}`;
+      formattedStatement.innerHTML = `<b>${statement.characterName}</b>${statement.content}`;
+      tab.appendChild(formattedStatement);
 
-      tabTitle = logDocument.createElement('div');
-      tabTitle.className = 'tabtitle';
-      tabTitle.innerHTML = statement.tabName;
-      tab.appendChild(tabTitle);
-    }
-
-    formattedStatement = logDocument.createElement('p');
-    formattedStatement.className = `character c${characterColorList.findIndex((characterColor) => 
-      characterColor.characterName === statement.characterName && characterColor.color === statement.color)}`;
-    formattedStatement.innerHTML = `<b>${statement.characterName}</b>${statement.content}`;
-    tab.appendChild(formattedStatement);
-    
+      lastStatemet = statement
+    }    
   })
 
 }
 
-function setStyleContent (characterColorList, tabNameList, tabColorList){
+function setStyleContent (characterColorList, tabSettingList){
   // set the basic style
   let styleContent = `
     html {
@@ -240,25 +245,26 @@ function setStyleContent (characterColorList, tabNameList, tabColorList){
   `;
 
   // set tab style
-  tabNameList.forEach ( (tab, index) => {
-    const checkReduceFontSize = document.getElementById(`reduceFontSize${index}`).checked;
-    const fontSize = checkReduceFontSize ? '0.6rem' : '0.8rem';
-    const tabTitleFontSize = checkReduceFontSize ? '0.7rem' : '1rem';
-
-    tabStyle = `
-
-      /* [${tab}] タブ */
-      .t${index} {
-        background-color: ${tabColorList[index]};
-        border-color: #999999;
-        color: #000000;
-        font-size: ${fontSize};
-      }
-      .t${index} .tabtitle {
-        font-size: ${tabTitleFontSize};
-      }
-    `
-    styleContent += tabStyle;
+  tabSettingList.forEach ( (tab, index) => {
+    if ( tab.show ){
+      const fontSize = tab.reduceFontSize ? '0.6rem' : '0.8rem';
+      const tabTitleFontSize = tab.reduceFontSize ? '0.7rem' : '1rem';
+  
+      tabStyle = `
+  
+        /* [${tab}] タブ */
+        .t${index} {
+          background-color: ${tab.tabColor};
+          border-color: #999999;
+          color: #000000;
+          font-size: ${fontSize};
+        }
+        .t${index} .tabtitle {
+          font-size: ${tabTitleFontSize};
+        }
+      `
+      styleContent += tabStyle;  
+    }
   })
 
   // set character style
@@ -436,39 +442,25 @@ function getTabColorList(tabNameList){
 }
 
 function deleteTab(statements, tabNameList){
-  let deletedStatements = statements
-  let deletedTabNameList = tabNameList
+  // let deletedStatements = statements;
+  let tabSettingList = [];
   for (let i=0; i<tabNameList.length; i++){
-    const checkTabInput = document.getElementById(`checkTab${i}`);
-    console.log(checkTabInput.checked)
-    if (checkTabInput.checked === false){
-      console.log('in');
-      deletedStatements = deletedStatements.filter((statement) => {
-        return statement.tabName !== tabNameList[i];
-      });
-      deletedTabNameList = deletedTabNameList.filter((tabName) => {
-        return tabName !== tabNameList[i];
-      });
+    const checkTabInput = document.getElementById(`checkTab${i}`).checked;
+    let tabName = tabNameList[i];
+    const changedTabName = document.getElementById(`changedTabName${i}`).value
+    if ( changedTabName !== "" ){
+      tabName = changedTabName
     }
+    const tabColor = document.getElementById(`tabColorPicker${i}`).value;
+    const checkReduceFontSize = document.getElementById(`reduceFontSize${i}`).checked;
+    // if (checkTabInput === false){
+    //   deletedStatements = deletedStatements.filter((statement) => {
+    //     return statement.tabIndex !== i;
+    //   })
+    // }
+    tabSettingList.push({"show":checkTabInput, "tabName":tabName, "tabColor":tabColor, "reduceFontSize": checkReduceFontSize});
   }
-  console.log(deletedTabNameList);
-  console.log(deletedStatements);
-  return [deletedStatements, deletedTabNameList];
-}
-
-function changeTabName(statements, tabNameList){
-  for (let i=0; i<tabNameList.length; i++){
-    const changedTabName = document.getElementById(`changedTabName${i}`).value;
-
-    if (changedTabName !== ""){
-      statements.forEach((statement, index) => {
-        if (statement.tabName === tabNameList[i]) {
-            statement.tabName = changedTabName;
-        }
-      });
-      tabNameList[i] = changedTabName;
-    }
-  }
+  return tabSettingList;
 }
 
 function changeCharacterColor(statements, characterColorList){
